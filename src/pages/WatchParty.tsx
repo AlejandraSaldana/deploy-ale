@@ -98,6 +98,7 @@ const WatchParty = () => {
 
     const roomOne = supabase.channel("room-one", {
       config: {
+        broadcast: { self: true },
         presence: {
           key: session?.user?.id,
         },
