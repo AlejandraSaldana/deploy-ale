@@ -5,33 +5,100 @@ import reels2 from "@/data/img/reels2.jpg";
 import reels3 from "@/data/img/reels3.jpg";
 import reels4 from "@/data/img/reels4.jpg";
 import ReelsActionBar from "./ReelsActionBar";
+import { motion,  type Transition } from "motion/react";
 
 const reels = [
   { id: 1, title: "El Barcelona gana contra Levante 3-1", thumbnail: reels1 },
   { id: 2, title: "Lewandowski hat-trick vs Villarreal", thumbnail: reels2 },
   { id: 3, title: "Highlights Clásico 2025", thumbnail: reels3 },
   { id: 4, title: "Entrenamiento Camp Nou", thumbnail: reels4 },
-  { id: 5, title: "Gavi vuelve al equipo", thumbnail: reels1 },
 ];
 
-const ReelsFeed = () => {
-  const [activeIndex, setActiveIndex] = useState(1);
+const spring: Transition = {
+  type: "spring",
+  stiffness: 100,
+  damping: 22,
+  mass: 0.8,
+};
 
-  const prev = reels[activeIndex - 1] ?? null;
-  const current = reels[activeIndex];
-  const next = reels[activeIndex + 1] ?? null;
+const ReelsFeed = () => {
+ 
+  const variants = {
+    center: {
+      scale: 1,
+      x: 0,
+      opacity: 1,
+      zIndex: 3,
+      width: 384,   // w-96
+      height: 620,
+      rotate: 0,
+    },
+    left: {
+      scale: 1,
+      x: -280,
+      opacity: 0.45,
+      zIndex: 2,
+      width: 224,   // w-56
+      height: 288,  // h-72
+      rotate: -5,
+    },
+    right: {
+      scale: 1,
+      x: 280,
+      opacity: 0.45,
+      zIndex: 2,
+      width: 224,
+      height: 288,
+      rotate: 5,
+    },
+    // Hidden cards are placed offscreen left or right so they slide IN,
+    // not pop in from the center
+    hiddenLeft: {
+      scale: 0.8,
+      x: -560,
+      opacity: 0,
+      zIndex: 0,
+      width: 224,
+      height: 288,
+      rotate: -5,
+    },
+    hiddenRight: {
+      scale: 0.8,
+      x: 560,
+      opacity: 0,
+      zIndex: 0,
+      width: 224,
+      height: 288,
+      rotate: 5,
+    },
+  };
+
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const getPosition = (i: number) => {
+    const diff = i - activeIndex
+    if (diff === 0) return "center";
+    if (diff === 1) return "right";
+    if (diff === -1) return "left";
+    return "hidden";
+  };
+  
+
+  const getAnimateState = (i: number) => {
+    const position = getPosition(i);
+    if (position !== "hidden") return position;
+    const diff = i - activeIndex
+    return diff > activeIndex ? "hiddenRight" : "hiddenLeft";
+  };
 
   type Key = "ArrowLeft" | "ArrowRight";
-
   const keyHandlers: Record<Key, () => void> = {
-    ArrowLeft: () => setActiveIndex((current) => (current > 0 ? current - 1 : current)),
-    ArrowRight: () =>
-      setActiveIndex((current) => (current < reels.length - 1 ? current + 1 : current)),
+    ArrowLeft: () => setActiveIndex((i) => Math.max(i - 1, 0)),
+    ArrowRight: () => setActiveIndex((i) => Math.min(i + 1, reels.length -1))
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     const key = e.key as Key;
-
     if (keyHandlers[key]) {
       e.preventDefault();
       keyHandlers[key]();
@@ -48,78 +115,51 @@ const ReelsFeed = () => {
       <div className="w-full mt-24 py-8 px-4">
         <h2 className="text-white text-xl font-bold mb-6 px-2">Reels</h2>
 
-        {/* 3-card row */}
-        <div className="flex items-center justify-center gap-3">
-          {/* LEFT (prev) — faded, smaller, partially cut */}
-          <div
-            onClick={() => activeIndex > 0 && setActiveIndex(activeIndex - 1)}
-            className={`
-            shrink-0 relative rounded-xl overflow-hidden cursor-pointer
-            transition-all duration-300
-            w-56 h-72 opacity-40 scale-95
-            ${!prev ? "invisible" : ""}
-          `}
-          >
-            {prev && (
-              <>
-                <img
-                  src={prev.thumbnail}
-                  alt={prev.title}
-                  className="w-full h-full object-cover"
-                />
-                {/* Right-side fade so it bleeds into center */}
-                <div className="absolute inset-0 bg-linear-to-l from-black/80 to-transparent" />
-              </>
-            )}
-          </div>
+        {/* Carousel */}
+        <div className="relative flex items-center justify-center h-155 overflow-hidden py-14">
+          {reels.map((reel, i) => {
+            const position = getPosition(i);
+            const animateState = getAnimateState(i);
 
-          {/* CENTER (active) — full size, no fade */}
-          <div className="flex flex-col gap-y-5 items-center">
-            <div className="shrink-0 relative rounded-2xl overflow-hidden w-96 h-155 shadow-2xl shadow-black z-10 transition-all duration-300">
+            return (
+              <motion.div
+                key={reel.id}
+                variants={variants}
+                animate={animateState}
+                transition={spring}
+                className="absolute cursor-pointer overflow-hidden rounded-2xl shadow-2xl shadow-black"
+                onClick={() => setActiveIndex(i)}
+              >
               <img
-                src={current.thumbnail}
-                alt={current.title}
-                className="w-full h-full object-cover"
-              />
-
-              {/* Bottom gradient overlay */}
-              <div className="absolute inset-0 bg-linear-to-t from-black/90 via-transparent to-transparent" />
-
-              {/* Title + Actions */}
-              <div className="absolute bottom-0 left-0 right-0 p-4">
-                <p className="text-white text-sm font-semibold mb-3 leading-snug">
-                  {current.title}
-                </p>
-              </div>
-            </div>
-                <ReelsActionBar/>
-          </div>
-
-          {/* RIGHT (next) — faded, smaller, partially cut */}
-          <div
-            onClick={() =>
-              activeIndex < reels.length - 1 && setActiveIndex(activeIndex + 1)
-            }
-            className={`
-            shrink-0 relative rounded-xl overflow-hidden cursor-pointer
-            transition-all duration-300
-            w-36 h-64 opacity-40 scale-95
-            ${!next ? "invisible" : ""}
-          `}
-          >
-            {next && (
-              <>
-                <img
-                  src={next.thumbnail}
-                  alt={next.title}
+                  src={reel.thumbnail}
+                  alt={reel.title}
                   className="w-full h-full object-cover"
-                />
-                {/* Left-side fade so it bleeds into center */}
-                <div className="absolute inset-0 bg-linear-to-r from-black/80 to-transparent" />
-              </>
-            )}
-          </div>
+              />
+                <div className="absolute inset-0 bg-linear-to-t from-black/90 via-transparent to-transparent" />
+
+
+                {/* Title — fades in only for center */}
+                <motion.div
+                  className="absolute bottom-0 left-0 right-0 p-4"
+                  animate={{ opacity: position === "center" ? 1 : 0 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <p className="text-white text-sm font-semibold mb-3">
+                    {reel.title}
+                  </p>
+                </motion.div>
+              </motion.div>
+            );
+          })}
         </div>
+
+        {/* Action bar animates separately below the carousel */}
+        <motion.div
+          className="flex justify-center mt-4"
+          layout
+        >
+          <ReelsActionBar />
+        </motion.div>
       </div>
     </div>
   );
