@@ -1,6 +1,6 @@
-import PerfilUsuario from "../components/perfil/PerfilUsuario";
-import AmigosContainer from "../components/perfil/AmigosContainer";
-import LogrosContainer from "../components/perfil/LogrosContainer";
+import PerfilUsuario from "../features/perfil/PerfilUsuario";
+import AmigosContainer from "../features/perfil/AmigosContainer";
+import LogrosContainer from "../features/perfil/LogrosContainer";
 
 
 const amigos = [
