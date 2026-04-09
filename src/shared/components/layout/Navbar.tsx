@@ -47,7 +47,7 @@ const Navbar = () => {
       {/* navbar */}
       <nav
         className={`fixed top-3 left-1/2 -translate-x-1/2 z-50 w-[95vw] max-w-3xl lg:max-w-5xl bg-white rounded-full border border-slate-200 shadow-md px-4 h-14 flex items-center justify-between  transition-all duration-300
-          ${isVisible ? "opacity-100" : "opacity-0"}`}
+          ${isVisible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-4 pointer-events-none"}`}
       >
         {/* logo + links */}
         <div className="flex items-center gap-4 px-2">

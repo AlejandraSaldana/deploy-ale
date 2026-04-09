@@ -73,7 +73,7 @@ function Home() {
                     <h1 className="text-2xl md:text-3xl lg:text-4xl font-light">Tu Historia Comienza Aquí</h1>
                     <p className="text-xs md:text-sm text-brand-gray-mid">Únete al equipo blaugrana. Participa, interactúa y disfruta de tu club, todo en un mismo lugar.</p>
                     <div className="mt-6">
-                        <PrimaryButton onClick={() => navigate("/login")} size="lg">Registrarme</PrimaryButton>
+                        <PrimaryButton onClick={() => navigate("/login")} size="md" className="w-96 md:w-148 lg:w-164">Registrarme</PrimaryButton>
                     </div>
                 </div>
                 <div className="relative grid grid-cols-2 gap-10 mt-30 ">
