@@ -1,30 +1,87 @@
-import {useState, useEffect, useRef} from "react";
+import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
 import ProductoCard from "./ProductoCard";
-import prod1 from "@/data/img/imagenbarca.jpg";
-import prod2 from "@/data/img/imagenbarca2.jpg";
-import prod3 from "@/data/img/imagenbarca3.jpg";
-import prod4 from "@/data/img/imagenbarca4.jpg";
 
-const productos = [
-    { id: 1, imagen: prod1, categoria: "Rifa de Experiencia", nombre: "Tour por el Camp Nou", precio: "10 Monedas" },
-    { id: 2, imagen: prod2, categoria: "Rifa de Viaje", nombre: "Visita al vestuario", precio: "15 monedas" },
-    { id: 3, imagen: prod3, categoria: "Insignea Virtual", nombre: "Clase de fútbol", precio: "10 monedas" },
-    { id: 4, imagen: prod4, categoria: "Rifa de Experiencia", nombre: "Entrenamiento con el equipo", precio: "5 monedas" }
-]
+const supabaseUrl =
+  import.meta.env.VITE_SUPABASE_URL2 ?? import.meta.env.VITE_SUPABASE_URL ?? "";
+const supabaseKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY2 ??
+  import.meta.env.VITE_SUPABASE_ANON_KEY ??
+  "";
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+function mapProducto(row: Record<string, unknown>) {
+  const categories = row.categories as { name?: string } | null | undefined;
+  return {
+    id: Number(row.id),
+    nombre: String(row.name ?? "Producto"),
+    precio: Number(row.price ?? 0),
+    imagen: String(row.image_url ?? ""),
+    premium_only: Boolean(row.premium_only ?? false),
+    categoria: {
+      nombre: categories?.name ?? String(row.categoria_nombre ?? "Objeto"),
+    },
+  };
+}
 
 const Productos = () => {
-    return (
-        <div>
-            <div className="w-full h-28 bg-brand-navy" />
-            <h1 className=" text-2xl font-bold mt-4 px-20">Tienda FC Barcelona</h1>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mt-6 px-20">
-                {productos.map((producto) => (
-                    <ProductoCard key={producto.id} producto={producto} />
-                ))}
-            </div>
+  const [productos, setProductos] = useState<ReturnType<typeof mapProducto>[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-        </div>
-    );
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchProductos = async () => {
+      const { data, error: supaError } = await supabase
+        .from("products")
+        .select("*, categories(name)")
+        .order("id");
+
+      if (cancelled) return;
+
+      if (supaError) {
+        console.error("Supabase products:", supaError);
+        setError(supaError.message || "No se pudieron cargar los productos");
+        setProductos([]);
+      } else {
+        setProductos((data ?? []).map((row) => mapProducto(row as Record<string, unknown>)));
+      }
+    };
+
+    void fetchProductos();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <div>
+      <h1 className="text-4xl font-bold mt-4 px-20">Tienda FC Barcelona</h1>
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-8 mx-auto max-w-7xl mt-6">
+        <p className="text-[#555555] text-[1.15rem] leading-relaxed font-normal tracking-tight">
+          Canjea tus monedas por insignias digitales exclusivas para personalizar tu perfil de culé, o
+          participa en rifas increíbles para ganar viajes a Barcelona, tours por el Camp Nou, boletos VIP
+          o incluso la oportunidad de aparecer en el estadio durante un partido.
+        </p>
+        <p className="text-[#555555] text-[1.15rem] leading-relaxed font-normal tracking-tight mt-4">
+          ¡Demuestra tu pasión blaugrana y vive experiencias únicas! Més que un club.
+        </p>
+      </div>
+
+      {error && (
+        <p className="text-red-600" role="alert">
+          {error}
+        </p>
+      )}
+
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mt-6 px-20 pb-12">
+        {productos.map((producto) => (
+          <ProductoCard key={producto.id} producto={producto} />
+        ))}
+      </div>
+    </div>
+  );
 };
 
 export default Productos;
