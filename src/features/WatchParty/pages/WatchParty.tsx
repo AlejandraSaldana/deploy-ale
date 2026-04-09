@@ -36,7 +36,7 @@ const WatchParty = () => {
     );
   } else {
     return (
-      <div className="w-full flex gap-4 h-[calc(100vh-3rem)] justify-center items-start p-8 py-22 overflow-y-auto bg-brand-navy">
+      <div className="w-full flex gap-4 justify-center items-start p-8 py-22 bg-brand-navy">
         <div className="w-270">
           <ScoreCard
             date="Lunes 6 de Abril 2026"
