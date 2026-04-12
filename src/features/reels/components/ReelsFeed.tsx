@@ -70,10 +70,6 @@ const ReelsFeed = () => {
     fetchVids();
   }, []);
 
-  useEffect(() => {
-    console.log(videos);
-  }, [videos]);
-
 
   return (
     <div
@@ -92,6 +88,7 @@ const ReelsFeed = () => {
 
             return (
               <ReelCard
+                key={reel.id}
                 id={reel.id}
                 video_url={reel.video_url}
                 thumbnail_url={reel.thumbnail_url}

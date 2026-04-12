@@ -1,6 +1,6 @@
 import { VolumeX, Volume2, Play, Pause } from "lucide-react";
 import { motion, type Transition } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 const spring: Transition = {
   type: "spring",
@@ -83,6 +83,8 @@ const ReelCard = ({
       rotate: 5,
     },
   };
+
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -91,18 +93,31 @@ const ReelCard = ({
     if (!video) return;
 
     if (video?.paused) {
-      video.play();
+      video.play().then(() => setIsPaused(false));
     } else {
       video?.pause();
+      setIsPaused(true);
     }
-    setIsPaused((prev) => !prev);
+    
   };
+
 
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.muted = muted;
     }
   }, [muted]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (position === "center"){
+        video.play().catch(() => {console.log("failed to play video")})
+    }
+    else{
+        video.pause()
+    }
+  }, [position])
 
   useEffect(() => {
     if (position !== "center") {
@@ -118,8 +133,11 @@ const ReelCard = ({
       transition={spring}
       className="absolute overflow-hidden rounded-2xl shadow-2xl shadow-black group cursor-pointer"
       onClick={() => {
-        changeActiveIndex();
-        togglePlay();
+        if (position !== "center") {
+          changeActiveIndex();
+        } else {
+          togglePlay();
+        }
       }}
     >
       {position === "center" ? (
@@ -127,14 +145,12 @@ const ReelCard = ({
           <video
             ref={videoRef}
             src={video_url}
-            autoPlay
             muted={muted}
             loop
             playsInline
             controlsList="nofullscreen"
             style={{
               width: "100%",
-              height: "100vh",
               objectFit: "cover",
               outline: "none",
             }}
