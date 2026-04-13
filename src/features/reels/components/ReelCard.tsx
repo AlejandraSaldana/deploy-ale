@@ -1,6 +1,6 @@
 import { VolumeX, Volume2, Play, Pause } from "lucide-react";
 import { motion, type Transition } from "motion/react";
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const spring: Transition = {
   type: "spring",
@@ -84,7 +84,6 @@ const ReelCard = ({
     },
   };
 
-
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -98,9 +97,7 @@ const ReelCard = ({
       video?.pause();
       setIsPaused(true);
     }
-    
   };
-
 
   useEffect(() => {
     if (videoRef.current) {
@@ -111,13 +108,14 @@ const ReelCard = ({
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (position === "center"){
-        video.play().catch(() => {console.log("failed to play video")})
+    if (position === "center") {
+      video.play().catch(() => {
+        console.log("failed to play video");
+      });
+    } else {
+      video.pause();
     }
-    else{
-        video.pause()
-    }
-  }, [position])
+  }, [position]);
 
   useEffect(() => {
     if (position !== "center") {
