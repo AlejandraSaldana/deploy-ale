@@ -54,7 +54,7 @@ const ProductoCard = ({ producto, esPremium, onPremiumClick }: Props) => {
           }`}
           onClick={handleComprarClick}
         >
-          {producto.premium && !esPremium ? "🔒 Premium" : "Comprar"}
+          Comprar
         </button>
       </div>
     </div>

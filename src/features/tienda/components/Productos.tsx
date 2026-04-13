@@ -24,8 +24,11 @@ const Productos = () => {
   const [mostrarPremium, setMostrarPremium] = useState(false);
 
   useEffect(() => {
-    if (!session?.user?.id) return;
-    
+    if (!session?.user?.id) {
+      setEsPremium(false);
+      return;
+    }
+
     const checkPremium = async () => {
       const { data } = await supabase
         .from("profiles")
@@ -33,7 +36,7 @@ const Productos = () => {
         .eq("id", session.user.id)
         .single();
 
-      setEsPremium(data?.membership === false);
+      setEsPremium(Boolean(data?.membership));
     };
 
     void checkPremium();
@@ -86,9 +89,18 @@ const Productos = () => {
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mt-6 px-20 pb-12">
         {productos.map((producto) => (
-          <ProductoCard key={producto.id} producto={producto} esPremium={esPremium} onPremiumClick={() => setMostrarPremium(true)}/> // Renderiza cada producto usando ProductoCard
+          <ProductoCard
+            key={producto.id}
+            producto={producto}
+            esPremium={esPremium}
+            onPremiumClick={() => setMostrarPremium(true)}
+          />
         ))}
       </div>
+
+      {mostrarPremium && (
+        <PremiumWindow onClose={() => setMostrarPremium(false)} />
+      )}
     </div>
   );
 };
