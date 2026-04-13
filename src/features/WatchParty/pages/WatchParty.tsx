@@ -1,18 +1,16 @@
-import InfoCard from "../features/WatchParty/Components/InfoCard";
-import ChatHeader from "../features/WatchParty/Components/ChatHeader";
-import ChatMessageBubble from "../features/WatchParty/Components/ChatMessageBubble";
-import ChatInput from "../features/WatchParty/Components/ChatInput";
-import useWatchPartyChat from "../features/WatchParty/Hooks/ChatLogic";
-import useSession from "../features/WatchParty/Hooks/SessionLogic";
-import ScoreCard from "../features/WatchParty/Components/ScoreCard";
-import PrediccionesPopulares from "../features/WatchParty/Components/PrediccionesPopulares";
-import { useMatch } from "../features/WatchParty/Hooks/UseMatchScore";
+import InfoCard from "../Components/InfoCard";
+import ChatHeader from "../Components/ChatHeader";
+import ChatMessageBubble from "../Components/ChatMessageBubble";
+import ChatInput from "../Components/ChatInput";
+import useWatchPartyChat from "../Hooks/ChatLogic";
+import useSession from "../Hooks/SessionLogic";
+import ScoreCard from "../Components/ScoreCard";
+import PrediccionesPopulares from "../Components/PrediccionesPopulares";
+import { useMatch } from "../Hooks/UseMatchScore";
 
 const WatchParty = () => {
   const session = useSession();
   const { match: liveMatch, loading } = useMatch();
-
-  const defaultPredicciones: { label: string; value: string }[] = [];
 
   const matchDateLabel = liveMatch
     ? new Date(liveMatch.fixture.date).toLocaleDateString("es-ES", {
@@ -22,6 +20,14 @@ const WatchParty = () => {
         year: "numeric",
       })
     : "";
+
+  const matchMinute = liveMatch?.fixture.status.elapsed ?? 0;
+
+  const defaultPredicciones = [
+    { label: "Ganador", value: "FC Barcelona (68%)" },
+    { label: "Marcador más votado", value: "2 - 1" },
+    { label: "Primer goleador favorito", value: "Bonmati" },
+  ];
 
   // Para ver las cosas que nos trae la sesión DEBUG
   console.log(session);
@@ -50,7 +56,11 @@ const WatchParty = () => {
   }
 
   if (!liveMatch) {
-    return <div className="p-6 text-gray-700">No live matches</div>;
+    return (
+      <div className="p-6 text-gray-700">
+        No hay partido disponible en este momento.
+      </div>
+    );
   }
 
   return (
@@ -62,7 +72,7 @@ const WatchParty = () => {
           homeTeamScore={liveMatch.goals.home ?? 0}
           awayTeam={liveMatch.teams.away.name}
           awayTeamScore={liveMatch.goals.away ?? 0}
-          matchTime={liveMatch.fixture.status.elapsed ?? 0}
+          matchTime={matchMinute}
           location={liveMatch.fixture.venue.name ?? "Por confirmar"}
           fansWatching={usersOnline.length}
         />

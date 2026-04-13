@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
-import { fetchBarcelonaMatch } from "../Services/MatchScore";
-import type { MatchResponse } from "../Types/MatchTypes";
+import type { LiveMatch } from "../Types/MatchTypes";
 
 export const useMatch = () => {
-  const [match, setMatch] = useState<MatchResponse | null>(null);
+  const [match, setMatch] = useState<LiveMatch | null>(null);
   const [loading, setLoading] = useState(true);
 
   const getMatch = async () => {
     try {
-      const data = await fetchBarcelonaMatch(true);
+      const response = await fetch("/watchparty-api/api/live-match");
+      const data = (await response.json()) as LiveMatch | null;
       setMatch(data);
     } catch (error) {
       console.error(error);
+      setMatch(null);
     } finally {
       setLoading(false);
     }
@@ -19,8 +20,6 @@ export const useMatch = () => {
 
   useEffect(() => {
     getMatch();
-    const interval = setInterval(getMatch, 15000);
-    return () => clearInterval(interval);
   }, []);
 
   return { match, loading };
