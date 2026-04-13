@@ -40,7 +40,7 @@ const ReelsFeed = () => {
   };
 
   const userId = useSession()?.user.id;
-  const { videos, toggleLike } = useReels(userId);
+  const { videos, toggleLike, reelWatched } = useReels(userId);
   const activeVideo = videos[activeIndex];
 
   return (
@@ -68,6 +68,8 @@ const ReelsFeed = () => {
                 animateState={animateState}
                 position={position}
                 muted={isMuted}
+                onView={() => reelWatched(reel.id)}
+                watched={reel.watched}
                 changeMute={() => setIsMuted((prev) => !prev)}
                 changeActiveIndex={() => setActiveIndex(i)}
               />

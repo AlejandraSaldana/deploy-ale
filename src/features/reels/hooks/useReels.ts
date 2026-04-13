@@ -7,7 +7,7 @@ import type { VideoReel } from "../interfaces/VideoReel";
 
 
 export function useReels(userId: any) {
-
+    if (!userId) return;
     const [videos, setVideos] = useState<VideoReel[]>([]);
 
 
@@ -21,7 +21,7 @@ export function useReels(userId: any) {
             video_url,
             thumbnail_url,
             caption,
-            user_video_actions(liked, user_id)
+            user_video_actions(liked, user_id, watched)
           `)
           .eq('is_active', true)
           .limit(5);
@@ -39,6 +39,7 @@ export function useReels(userId: any) {
                 thumbnail_url: video.thumbnail_url,
                 video_url: video.video_url,
                 caption: video.caption,
+                watched: action?.watched ?? false,
                 liked: action?.liked ?? false
             }
           })
@@ -46,6 +47,21 @@ export function useReels(userId: any) {
     }
     fetchVideos();
     },[userId])
+
+    const reelWatched = async (videoId: string) => {
+      setVideos( 
+            (prev) => prev.map(v => v.id === videoId ? {...v, watched: true} : v)
+        );
+
+        const video = videos.find((v) => v.id === videoId);
+
+        await supabase.from('user_video_actions').upsert({
+        user_id: userId,
+        video_id: videoId,
+        liked: video?.liked,
+        watched: true
+        });
+    }
 
     const toggleLike = async (videoId: string) => {
         setVideos( 
@@ -61,5 +77,5 @@ export function useReels(userId: any) {
         });
 }
     
-    return {videos, toggleLike};
+    return {videos, toggleLike, reelWatched};
 }

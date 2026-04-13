@@ -4,4 +4,5 @@ export interface VideoReel {
     video_url: string;
     caption: string;
     liked: boolean;
+    watched: boolean;
 }

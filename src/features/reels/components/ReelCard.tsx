@@ -18,6 +18,8 @@ interface ReelCardProps {
   animateState: string;
   position: string;
   muted: boolean;
+  watched: boolean;
+  onView: () => void;
   changeMute: () => void;
   changeActiveIndex: () => void;
 }
@@ -27,10 +29,11 @@ const ReelCard = ({
   video_url,
   thumbnail_url,
   caption,
-  duration,
   animateState,
   position,
   muted,
+  watched,
+  onView,
   changeMute,
   changeActiveIndex,
 }: ReelCardProps) => {
@@ -122,6 +125,12 @@ const ReelCard = ({
       setIsPaused(false);
     }
   }, [position]);
+
+  useEffect(() => {
+    if (position === "center" && !watched){
+      onView();
+    }
+  }, [position])
 
   return (
     <motion.div
