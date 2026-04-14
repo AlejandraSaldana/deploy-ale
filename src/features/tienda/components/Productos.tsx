@@ -110,6 +110,7 @@ const Productos = () => {
 
   return (
     <div>
+      <div className="h-25 bg-[#001E44] w-full mb-8" />
       <h1 className="text-4xl font-bold mt-4 px-20">Tienda FC Barcelona</h1>
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-8 mx-auto max-w-7xl mt-6">
         <p className="text-[#555555] text-[1.15rem] leading-relaxed font-normal tracking-tight">
@@ -128,7 +129,7 @@ const Productos = () => {
         </p>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mt-6 px-20 pb-12">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-10 px-20 pb-20">
         {productos.map((producto) => (
           <ProductoCard
             key={producto.id}
@@ -146,13 +147,16 @@ const Productos = () => {
           onClose={() => setMostrarPremium(false)}
           onSubscribe={() => {
             setMostrarPremium(false);
-            setShowStripe(true); // 👈 abre el formulario de Stripe
+            setShowStripe(true); // abre el formulario de Stripe
           }}
         />
       )}
 
       {showStripe && (
-        <StripeModal onClose={() => setShowStripe(false)} />
+        <StripeModal
+          onClose={() => setShowStripe(false)}
+          onPremiumActivated={() => setEsPremium(true)}
+        />
       )}
     </div>
   );
