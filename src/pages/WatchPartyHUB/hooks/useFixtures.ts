@@ -1,75 +1,54 @@
-import { useEffect, useState } from "react";
-import type { Fixture } from "../interfaces/index.interfaces";
+// hooks/useFixtures.ts
+import { useState, useEffect } from "react";
 
-const BARCA_TEAM_ID = 529;
-const API_KEY = import.meta.env.VITE_API_KEY as string;
-const BASE_URL = "https://v3.football.api-sports.io";
+const PROXY = "https://fcb-proxy.onrender.com";
 
-/** Devuelve la temporada activa: si estamos en enero-mayo, es el año anterior */
-function getCurrentSeason(): number {
-  const now = new Date();
-  const month = now.getMonth() + 1; // 1-12
-  return month >= 8 ? now.getFullYear() : now.getFullYear() - 1;
+interface Fixture {
+  fixture_id: string;
+  category: "varonil" | "femenil";
+  date: string;         // mapped from datetime
+  homeTeam: string;     // mapped from home_team
+  awayTeam: string;     // mapped from away_team
+  competition: string;
 }
 
-/** Formatea una fecha como "YYYY-MM-DD" para la API */
-function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0];
+interface RawFixture {
+  fixture_id: string;
+  category: string;
+  datetime: string;
+  home_team: string;
+  away_team: string;
+  competition: string;
 }
 
-function mapFixture(item: any): Fixture {
-  return {
-    fixture_id: item.fixture.id,
-    date: item.fixture.date,
-    homeTeam: item.teams.home.name,
-    awayTeam: item.teams.away.name,
-    venue: item.fixture.venue?.name ?? "No disponible",
-    status: item.fixture.status.short, 
-    competition: item.league.name,
-  };
-}
-
-interface UseFixturesReturn {
-  fixtures: Fixture[];
-  isLoading: boolean;
-  error: string | null;
-}
-
-export function useFixtures(): UseFixturesReturn {
+export function useFixtures() {
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchFixtures = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      const today = new Date();
-      const twoWeeksLater = new Date();
-      twoWeeksLater.setDate(today.getDate() + 14);
-
-      const from = formatDate(today);
-      const to = formatDate(twoWeeksLater);
-      const season = getCurrentSeason();
-
-      const url = `${BASE_URL}/fixtures?team=${BARCA_TEAM_ID}&from=${from}&to=${to}&season=${season}`;
-
+    const loadFixtures = async () => {
       try {
-        const res = await fetch(url, {
-          headers: { "x-apisports-key": API_KEY },
-        });
+        setIsLoading(true);
+        const response = await fetch(`${PROXY}/api/scraper/next-matches`);
+        if (!response.ok) throw new Error("Error al cargar partidos");
 
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await response.json();
 
-        const json = await res.json();
+        const allRaw: RawFixture[] = [
+          ...(data.varonil ?? []),
+          ...(data.femenil ?? []),
+        ];
 
-        // La API devuelve errores dentro del body con status 200
-        if (json.errors && Object.keys(json.errors).length > 0) {
-          throw new Error(Object.values<string>(json.errors).join(", "));
-        }
+        const mapped: Fixture[] = allRaw.map((f) => ({
+          fixture_id: f.fixture_id,
+          category: f.category as "varonil" | "femenil",
+          date: f.datetime,
+          homeTeam: f.home_team,
+          awayTeam: f.away_team,
+          competition: f.competition,
+        }));
 
-        const mapped: Fixture[] = (json.response ?? []).map(mapFixture);
         setFixtures(mapped);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Error desconocido");
@@ -78,7 +57,7 @@ export function useFixtures(): UseFixturesReturn {
       }
     };
 
-    fetchFixtures();
+    loadFixtures();
   }, []);
 
   return { fixtures, isLoading, error };
