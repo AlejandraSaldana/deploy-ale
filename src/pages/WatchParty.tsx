@@ -8,13 +8,14 @@ import useSession from "../features/WatchParty/Hooks/SessionLogic";
 import ScoreCard from "../features/WatchParty/Components/ScoreCard";
 import PrediccionesPopulares from "../features/WatchParty/Components/PrediccionesPopulares";
 import { useMatch } from "../features/WatchParty/Hooks/UseMatchScore";
+import { useMatchClock } from "../features/WatchParty/Hooks/useMatchClock";
+import { useMatchPredictions } from "../features/WatchParty/Hooks/useMatchPredictions";
 
 const WatchParty = () => {
   const { code } = useParams<{ code: string }>();
   const session = useSession();
-  const { match: liveMatch, loading, error } = useMatch();
-
-  const defaultPredicciones: { label: string; value: string }[] = [];
+  const { match: liveMatch, loading, error, fetchedAt } = useMatch();
+  const { predictions } = useMatchPredictions();
 
   const matchDateLabel = liveMatch
     ? new Date(liveMatch.fixture.date).toLocaleDateString("es-ES", {
@@ -24,6 +25,11 @@ const WatchParty = () => {
         year: "numeric",
       })
     : "";
+
+  const matchClock = useMatchClock(
+    liveMatch?.fixture.status.elapsed,
+    fetchedAt,
+  );
 
   // Canal dinámico según el código de sala
   const {
@@ -72,8 +78,8 @@ const WatchParty = () => {
           homeTeamScore={liveMatch.goals.home ?? 0}
           awayTeam={liveMatch.teams.away.name}
           awayTeamScore={liveMatch.goals.away ?? 0}
-          matchTime={liveMatch.fixture.status.elapsed ?? 0}
-          location={liveMatch.fixture.venue.name ?? "Por confirmar"}
+          matchTime={matchClock}
+          location={liveMatch.fixture.venue.name ?? "No disponible"}
           fansWatching={usersOnline.length}
         />
         <div className="flex gap-4 w-full mt-4">
@@ -84,14 +90,14 @@ const WatchParty = () => {
           />
           <InfoCard
             label="ESTADIO"
-            title={liveMatch.fixture.venue.name ?? "Por confirmar"}
+            title={liveMatch.fixture.venue.name ?? "No disponible"}
             subtitle={liveMatch.fixture.venue.city ?? ""}
           />
         </div>
         <div className="flex gap-4 w-full mt-4">
           <PrediccionesPopulares
             title="Predicciones populares"
-            predictions={defaultPredicciones}
+            predictions={predictions}
           />
         </div>
       </div>
