@@ -5,6 +5,7 @@ export const useMatch = () => {
   const [match, setMatch] = useState<LiveMatch | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fetchedAt, setFetchedAt] = useState<number | null>(null);
 
   const getMatch = async () => {
     try {
@@ -19,12 +20,14 @@ export const useMatch = () => {
       if (data && typeof data === "object" && "fixture" in data) {
         setMatch(data as LiveMatch);
         setError(null);
+        setFetchedAt(Date.now());
         return;
       }
 
       if (data === null) {
         setMatch(null);
         setError(null);
+        setFetchedAt(Date.now());
         return;
       }
 
@@ -40,7 +43,15 @@ export const useMatch = () => {
 
   useEffect(() => {
     getMatch();
+
+    const intervalId = setInterval(() => {
+      void getMatch();
+    }, 30000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
   }, []);
 
-  return { match, loading, error };
+  return { match, loading, error, fetchedAt };
 };

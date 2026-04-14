@@ -5,7 +5,7 @@ type ScoreCardProps = {
   homeTeamScore: number;
   awayTeam: string;
   awayTeamScore: number;
-  matchTime: number;
+  matchTime: string;
   location: string;
   fansWatching: number;
 };
@@ -20,7 +20,6 @@ const ScoreCard = ({
   location,
   fansWatching,
 }: ScoreCardProps) => {
-  const formattedTime = `${String(matchTime).padStart(2, "0")}:00`;
   let fansText: string;
   if (fansWatching == 1) {
     fansText = "fan participando";
@@ -54,7 +53,7 @@ const ScoreCard = ({
             vs
           </p>
           <p className="text-5xl leading-none font-bold tracking-[0.14em] text-white">
-            {formattedTime}
+            {matchTime}
           </p>
         </div>
         <div>

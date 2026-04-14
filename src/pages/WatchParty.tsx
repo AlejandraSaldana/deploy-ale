@@ -8,11 +8,12 @@ import useSession from "../features/WatchParty/Hooks/SessionLogic";
 import ScoreCard from "../features/WatchParty/Components/ScoreCard";
 import PrediccionesPopulares from "../features/WatchParty/Components/PrediccionesPopulares";
 import { useMatch } from "../features/WatchParty/Hooks/UseMatchScore";
+import { useMatchClock } from "../features/WatchParty/Hooks/useMatchClock";
 
 const WatchParty = () => {
   const { code } = useParams<{ code: string }>();
   const session = useSession();
-  const { match: liveMatch, loading, error } = useMatch();
+  const { match: liveMatch, loading, error, fetchedAt } = useMatch();
 
   const defaultPredicciones: { label: string; value: string }[] = [];
 
@@ -24,6 +25,11 @@ const WatchParty = () => {
         year: "numeric",
       })
     : "";
+
+  const matchClock = useMatchClock(
+    liveMatch?.fixture.status.elapsed,
+    fetchedAt,
+  );
 
   // Canal dinámico según el código de sala
   const {
@@ -72,7 +78,7 @@ const WatchParty = () => {
           homeTeamScore={liveMatch.goals.home ?? 0}
           awayTeam={liveMatch.teams.away.name}
           awayTeamScore={liveMatch.goals.away ?? 0}
-          matchTime={liveMatch.fixture.status.elapsed ?? 0}
+          matchTime={matchClock}
           location={liveMatch.fixture.venue.name ?? "Por confirmar"}
           fansWatching={usersOnline.length}
         />
