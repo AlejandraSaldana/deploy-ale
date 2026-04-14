@@ -24,7 +24,7 @@ export function useReels(userId: any) {
             user_video_actions(liked, user_id, watched)
           `)
           .eq('is_active', true)
-          .limit(5);
+          .limit(20);
           
 
           if (error) {
@@ -61,24 +61,16 @@ export function useReels(userId: any) {
         });
     }
 
-    const toggleLike = async (videoId: string) => {
-        let newLike: boolean | undefined;
-        setVideos( 
-            (prev) => prev.map(v => {
-              if (v.id === videoId){
-                newLike = !v.liked;
-                return {...v, newLike }
-              }
-              return v;
-            }
-        ));
-
-        await supabase.from('user_video_actions').upsert({
+  const toggleLike = async (videoId: string) => {
+    
+      setVideos( (prev) => prev.map(v => v.id === videoId ? {...v, liked: !v.liked} : v));
+      const video = videos.find((v) => v.id === videoId);
+      await supabase.from('user_video_actions').upsert({
         user_id: userId,
         video_id: videoId,
-        liked: newLike
+        liked: !video?.liked
         });
-}
+};
     
     return {videos, toggleLike, reelWatched};
 }

@@ -1,16 +1,15 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route  } from "react-router-dom";
 import SportsApi from "./pages/SportsApi";
 import Layout from "./layouts/Layout";
 import Index from "./pages/Index";
 import Chat from "./pages/Chat";
-import WatchParty from "./pages/WatchParty";
+import WatchParty from "../src/features/WatchParty/pages/WatchParty";
 import WatchPartyHUB from "./pages/WatchPartyHUB/pages/WatchPartyPage";
 import Wordle from "./pages/Wordle";
 import Perfil from "./pages/Perfil";
 import Ra from "./pages/ra"
 import Reels from "./pages/Reels"
 import Home from "./pages/Home";
-import Tienda from "./pages/Tienda"
 
 function App() {
   return (
@@ -25,6 +24,7 @@ function App() {
         <Route path="/wordle" element={<Wordle />} />
         <Route path="/ra" element={<Ra />} />
         <Route path="/reels" element={<Reels />} />
+        <Route path="/reels/:id" element={<Reels />} />
         <Route path="/perfil" element={<Perfil />} />
       </Route>
     </Routes>
