@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import ProductoCard from "./ProductoCard";
 import PremiumWindow from "./PremiumWindow";
 import { supabase } from "../../../shared/services/supabaseClient";
-import useSession from "../../../shared/hooks/useSession";
 import StripeModal from "./StripeModal";
 import AlertModal from "./AlertModal";
 import  {useUserInfo} from "./hooks/useUserInfo";
