@@ -7,7 +7,7 @@ const TOTAL = 7; // 3 letras + guión + 4 números = 7 caracteres sin guión
 
 interface UseWatchPartyCodeReturn {
   code: string[];
-  refs: React.MutableRefObject<(HTMLInputElement | null)[]>;
+  refs: React.RefObject<(HTMLInputElement | null)[]>;
   isComplete: boolean;
   isValidating: boolean;
   validationError: string | null;
@@ -55,7 +55,7 @@ export function useWatchPartyCode(onJoin?: (code: string) => void): UseWatchPart
   const handleJoin = useCallback(async (): Promise<void> => {
     if (!isComplete) return;
 
-    // Formatear: primeros 3 + guión + últimos 4 → "ABC-1234"
+    // Formatear: primeros 3 + guión + últimos 4  "ABC-1234"
     const raw = code.join("");
     const formatted = `${raw.slice(0, 3)}-${raw.slice(3)}`;
 

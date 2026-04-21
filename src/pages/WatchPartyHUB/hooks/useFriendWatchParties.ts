@@ -68,7 +68,7 @@ export function useFriendWatchParties(userId: string | undefined): UseFriendWatc
         .gte("match_date", new Date().toISOString())
         .order("match_date", { ascending: true })
         .limit(10);
-
+      
       if (!mountedRef.current) return;
 
       if (wpError) {

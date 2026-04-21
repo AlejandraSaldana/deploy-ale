@@ -62,7 +62,6 @@ export function usePublicWatchParties(): UsePublicWatchPartiesReturn {
     fetchPublic();
 
     // Suscripción en tiempo real — agrega la nueva sala directamente
-    // sin refetch completo (más eficiente)
     const channel = supabase
       .channel("public-watch-parties-realtime")
       .on<WatchParty>(
