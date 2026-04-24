@@ -27,7 +27,7 @@ const ChatInput = ({
           onClose={() => setShowStickers(false)}
         />
       )}
-      <form className="flex" onSubmit={onSubmit}>
+      <form className="flex space-x-3" onSubmit={onSubmit}>
         <button
           type="button"
           onClick={() => setShowStickers((prev) => !prev)}
