@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import ProductoCard from "./ProductoCard";
 import PremiumWindow from "./PremiumWindow";
 import { supabase } from "../../../shared/services/supabaseClient";
-import useSession from "../../../shared/hooks/useSession";
 import StripeModal from "./StripeModal";
+import AlertModal from "./AlertModal";
+import  {useUserInfo} from "./hooks/useUserInfo";
 
 function mapProducto(row: Record<string, unknown>) { // Mapea los datos de la fila a la estructura esperada por ProductoCard
   const categories = row.categories as { name?: string } | null | undefined;
@@ -18,13 +19,14 @@ function mapProducto(row: Record<string, unknown>) { // Mapea los datos de la fi
 }
 
 const Productos = () => {
-  const session = useSession();
+  const session = useUserInfo();
   const [productos, setProductos] = useState<ReturnType<typeof mapProducto>[]>([]); // El tipo de productos se infiere a partir de la función mapProducto
   const [error, setError] = useState<string | null>(null);
   const [esPremium, setEsPremium] = useState(false);
   const [mostrarPremium, setMostrarPremium] = useState(false);
   const [monedas, setMonedas] = useState<number>(0);
   const [showStripe, setShowStripe] = useState(false);
+  const [modal, setModal] = useState<{ title: string; message: React.ReactNode } | null>(null);
   
 
   useEffect(() => {
@@ -50,12 +52,12 @@ const Productos = () => {
 
   const handleComprar = async (producto: ReturnType<typeof mapProducto>) => {
     if (!session?.user?.id) {
-      alert("Debes iniciar sesión para comprar.");
+      setModal({ title: "Aviso", message: "Debes iniciar sesión para comprar." });
       return;
     }
 
     if (monedas < producto.precio) {
-      alert(`No tienes monedas suficientes. Tienes ${monedas} monedas y el producto cuesta ${producto.precio}.`);
+      setModal({ title: "Aviso", message: `No tienes monedas suficientes. Tienes ${(monedas).toLocaleString('en-US')} monedas y el producto cuesta ${(producto.precio).toLocaleString('en-US')}.` });
       return;
     }
 
@@ -66,7 +68,7 @@ const Productos = () => {
       .eq("id", session.user.id);
 
     if (updateError) {
-      alert("Error al procesar la compra.");
+      setModal({ title: "Error", message: "Hubo un error al procesar tu compra. Por favor, intenta de nuevo." });
       return;
     }
 
@@ -77,13 +79,28 @@ const Productos = () => {
       amount: producto.precio,
     });
 
+    setProductos((prev) => prev.filter((p) => p.id !== producto.id));
     setMonedas((prev) => prev - producto.precio); // Actualiza el estado local
-    alert(`¡Compra exitosa! Te quedan ${monedas - producto.precio} monedas.`);
+    setModal({
+      title: "¡Compra exitosa!",
+      message: <>Te quedan <span className="font-bold text-[#A50044]">{(monedas - producto.precio).toLocaleString('en-US')} monedas</span>.</>,
+    });
   };
 
   useEffect(() => {
     let cancelled = false;
     const fetchProductos = async () => {
+      if (session === undefined) return;
+      let purchaseiD: number[] = [];
+
+      if (session?.user?.id){
+        const { data: purchases } = await supabase
+          .from("purchases")
+          .select("product_id")
+          .eq("user_id", session.user.id);
+        purchaseiD = (purchases ?? []).map((p) => Number(p.product_id));
+      }
+
       const { data, error: supaError } = await supabase
         .from("products")
         .select("*, categories(name)")
@@ -97,8 +114,12 @@ const Productos = () => {
         return;
       }
 
+      const filtered = (data ?? [])
+        .map((row) => mapProducto(row as Record<string, unknown>))
+        .filter((p) => !purchaseiD.includes(p.id));
+
       setError(null);
-      setProductos((data ?? []).map((row) => mapProducto(row as Record<string, unknown>)));
+      setProductos(filtered);
 
     };
 
@@ -106,7 +127,7 @@ const Productos = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [session]);
 
   return (
     <div>
@@ -156,6 +177,14 @@ const Productos = () => {
         <StripeModal
           onClose={() => setShowStripe(false)}
           onPremiumActivated={() => setEsPremium(true)}
+        />
+      )}
+
+      {modal && (
+        <AlertModal
+          title={modal.title}
+          message={modal.message}
+          onClose={() => setModal(null)}
         />
       )}
     </div>

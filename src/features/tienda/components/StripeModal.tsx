@@ -5,10 +5,12 @@ import axios from "axios";
 import { Crown } from "lucide-react";
 import { supabase } from "../../../shared/services/supabaseClient";
 import { useUserInfo } from "./hooks/useUserInfo";
+import AlertModal from "./AlertModal";
 
-const stripePromise = loadStripe(
-  "pk_test_51TKQcPIoDuz1EoIWR489rG84IiZl305Yq2NCZiCSBnKh0QrRWWGgts82Pfzz1nSsbPkm0Ze7tWtFxuWVmZMJZVQY00oHzbRwkZ",
-);
+const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? "";
+const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
+
+type CheckoutOkResponse = { message?: string; subscriptionId?: string };
 
 const CheckoutForm = ({
   loading,
@@ -65,20 +67,25 @@ const CheckoutForm = ({
       }
 
       if (paymentMethod) {
-        // Intento opcional al backend; si Stripe Dashboard ya cobró pero el servidor falla,
-        // igual mostramos éxito en la app (tarjeta validada por Stripe.js).
-        try {
-          await axios.post(
-            "/api/checkout",
-            {
-              id: paymentMethod.id,
-              email: email.trim(),
-              name: name.trim(),
-            },
-            { validateStatus: () => true },
-          );
-        } catch (e) {
-          console.warn("Checkout backend (ignorado para la UI):", e);
+        const { data, status } = await axios.post<CheckoutOkResponse>(
+          "/api/checkout",
+          {
+            id: paymentMethod.id,
+            email: email.trim(),
+            name: name.trim(),
+          },
+          { validateStatus: () => true },
+        );
+
+        if (status !== 200 || !data?.subscriptionId) {
+          const serverMsg =
+            data && typeof data.message === "string" && data.message.trim()
+              ? data.message
+              : status === 503
+                ? "El servidor no tiene configurado Stripe. Revisa las variables de entorno."
+                : `No se pudo completar el pago (${status}). ¿Está corriendo el backend (npm run dev)?`;
+          alert(serverMsg);
+          return;
         }
 
         let membershipUpdated = false;
@@ -96,7 +103,7 @@ const CheckoutForm = ({
           if (profileError) {
             console.error("Supabase membership:", profileError.message);
             alert(
-              "El pago se registró, pero no se pudo actualizar tu perfil. Comprueba las políticas RLS de `profiles` en Supabase.",
+              "El pago se registró en Stripe, pero no se pudo actualizar tu perfil. Comprueba las políticas RLS de `profiles` en Supabase.",
             );
           } else {
             membershipUpdated = true;
@@ -205,23 +212,20 @@ export default function StripeModal({
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#00122e]/90 backdrop-blur-sm p-4 overflow-y-auto">
       {success && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-10 max-w-md w-full text-center shadow-2xl">
-            <h2 className="text-2xl font-black text-gray-900 mb-2">¡Felicidades!</h2>
-            <p className="text-gray-500 mb-6">
+        <AlertModal
+          title="¡Felicidades!"
+          message={
+            <>
               Eres parte del{" "}
               <span className="font-bold text-[#a51d36]">club premium del Barcelona</span>.
               Disfruta todos tus beneficios exclusivos.
-            </p>
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-full py-3 rounded-xl bg-[#A50044] text-white font-bold"
-            >
-              Cerrar
-            </button>
-          </div>
-        </div>
+            </>
+          }
+          onClose={() => {
+            setSuccess(false);
+            onClose(); // cierra también el StripeModal
+          }}
+        />
       )}
 
       <div className="bg-[#f3f4f6] w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[600px]">
@@ -238,18 +242,27 @@ export default function StripeModal({
             Completa todos los campos para activar tu membresía premium
           </p>
 
-          <Elements stripe={stripePromise}>
-            <CheckoutForm
-              loading={loading}
-              setLoading={setLoading}
-              userId={userId}
-              userEmail={userEmail}
-              onSuccess={({ membershipUpdated }) => {
-                if (membershipUpdated) onPremiumActivated?.();
-                setSuccess(true);
-              }}
-            />
-          </Elements>
+          {stripePromise ? (
+            <Elements stripe={stripePromise}>
+              <CheckoutForm
+                loading={loading}
+                setLoading={setLoading}
+                userId={userId}
+                userEmail={userEmail}
+                onSuccess={({ membershipUpdated }) => {
+                  if (membershipUpdated) onPremiumActivated?.();
+                  setSuccess(true);
+                }}
+              />
+            </Elements>
+          ) : (
+            <p className="text-sm text-red-600">
+              Falta la variable{" "}
+              <code className="rounded bg-red-50 px-1">VITE_STRIPE_PUBLISHABLE_KEY</code> en el
+              archivo <code className="rounded bg-red-50 px-1">.env</code> de la raíz del proyecto
+              (clave publicable <code className="rounded bg-red-50 px-1">pk_…</code> de Stripe).
+            </p>
+          )}
         </div>
 
         <div className="w-full md:w-[400px] bg-[#1a3668] p-8 text-white flex flex-col justify-between">
